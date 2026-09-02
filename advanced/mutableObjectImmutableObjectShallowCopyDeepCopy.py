@@ -127,7 +127,7 @@ b = copy.deepcopy(a)
 
 b['info']['age'] = 30
 
-print(a)1
+print(a)
 print(b)
 # {
 #     'name': 'Jack',

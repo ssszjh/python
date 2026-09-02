@@ -10,7 +10,7 @@ users.remove("Tom")
 # 在下标 1 的位置插入。
 # users.insert(1, 'Bob')
 
-set 的集合运算
+# set 的集合运算
 a = {1, 2, 3, 4}
 b = {3, 4, 5, 6}
 # 交集

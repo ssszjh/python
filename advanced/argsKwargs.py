@@ -20,6 +20,10 @@
 numbers = [1, 2, 3]
 print(*numbers)
 # 1 2 3
+# 不用拆包：
+# print(numbers[0], numbers[1], numbers[2])  # 太麻烦
+# 使用拆包：
+# print(*numbers)  
 
 user = {
     'name': 'Jack',
@@ -30,7 +34,7 @@ def test(name, age):
     print(name, age)
 
 test(**user)
-相当于
+# 相当于
 test(
     name='Jack',
     age=20
@@ -43,7 +47,8 @@ def test(*args):
 test(1, 2, 3)
 # (1,2,3)
 
-2.kwargs 是什么类型
+2.
+# kwargs 是什么类型
 def test(**kwargs):
     print(kwargs)
 
@@ -64,7 +69,8 @@ def test(*args, **kwargs):
 
 test(1, 2, name='Jack', age=20)
 
-4.拆包
+4.
+# 拆包
 def test(name, age):
     print(name, age)
     # jack 20

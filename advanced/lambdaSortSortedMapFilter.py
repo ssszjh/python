@@ -12,7 +12,7 @@ lambda user: user['age']
 # 调用
 print((lambda x: x * 2)(10))
 
-sort()
+# sort()
 users = [
     {'name': 'Jack', 'age': 30},
     {'name': 'Tom', 'age': 18},
@@ -21,7 +21,7 @@ users = [
 users.sort(key=lambda user: user['age'])
 # 它会直接修改原来的 list。
 
-sorted()
+# sorted()
 result = sorted(
     users,
     key=lambda user: user['age']
@@ -104,23 +104,25 @@ result2 = sorted(
 # result1 和 result2 分别是什么？
 # result1会改变users; result2 不会
 
-4.使用map
+4.
+# 使用map
 users = [
     {'name': 'Jack', 'age': 20},
     {'name': 'Tom', 'age': 18},
     {'name': 'Lucy', 'age': 25}
 ]
-得到：
+# 得到：
 ['Jack', 'Tom', 'Lucy']
 result = list.map(lambda user: user['name'], users)
 
-5.使用filter
+5.
+# 使用filter
 users = [
     {'name': 'Jack', 'age': 20},
     {'name': 'Tom', 'age': 17},
     {'name': 'Lucy', 'age': 25}
 ]
-得到成年人
+# 得到成年人
 result = list.filter(lambda user: user['age'] >=18, users)
 
 6.
