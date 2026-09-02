@@ -46,7 +46,7 @@ class Test:
 with Test():
     print('hello')
     1 / 0
-# 会
+# enter hello exit ZeroDivisionError
 
 # with xxx as x 中的 x，就是 __enter__() 的返回值。
 # __enter__()
@@ -285,13 +285,15 @@ with test() as x:
 
 # A B,100 C
 
-# 普通上下文管理器             @contextmanager
+# 普通上下文管理器（with）             @contextmanager
 
 # __enter__()        ≈         yield 前面的代码
 #       ↓                         ↓
 # with 内部代码                  with 内部代码
 #       ↓                         ↓
-# __exit__()         ≈         yield 后面的代码
+# __exit__()()         ≈         yield 后面的代码
+# 注意：
+# __exit__ 是无论有无异常都会执行的，而 yield 后面的裸代码只在无异常时才会执行。
 
 17.
 @contextmanager
@@ -303,7 +305,8 @@ def test():
 with test():
     print('B')
     1 / 0
-
+# print('C') 会不会执行？
+# 以及最终 ZeroDivisionError 会不会继续报出来？
 # A B C不会执行 ZeroDivisionError会抛出
 
 # 计时器

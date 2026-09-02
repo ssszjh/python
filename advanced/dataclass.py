@@ -1,5 +1,15 @@
 # dataclass
 
+class User:
+    def __init__(self, name, age, email):
+        self.name = name
+        self.age = age
+        self.email = email
+
+user = User('Jack', 20, 'jack@test.com')
+
+# 等价于下面
+
 from dataclasses import dataclass
 
 @dataclass
@@ -103,6 +113,11 @@ class User:
     tags: list = field(default_factory=list)
 
 # 推荐B ;因为list是可变对象；default_factory为类似安全的默认工厂
+# 写法 A：tags: list = []
+# 这里的 [] 在定义类时（而不是实例化时）只被创建一次。所有不传 tags 参数的 User 实例，它们的 tags 属性都指向内存中的同一个列表对象。
+# 写法 B：tags: list = field(default_factory=list)
+# default_factory=list 表示每次实例化类时，都会调用 list() 构造函数创建一个全新的空列表。每个实例拥有自己独立的内存空间。
+
 
 5.
 from dataclasses import dataclass, field
@@ -120,8 +135,8 @@ u1.tags.append('python')
 
 print(u1)
 print(u2)
-User(name='Jack', age=18, tags=['python'])
-User(name='Tom', age=20)
+# User(name='Jack', age=18, tags=['python'])
+# User(name='Tom', age=20)
 
 
 from dataclasses import dataclass, field
@@ -136,6 +151,16 @@ class User:
     id: int = field(init=False)
     
 # 可以在 __post_init__() 里处理
+# from dataclasses import dataclass, field
+
+# @dataclass
+# class User:
+#     name: str
+#     age: int
+#     id: int = field(init=False)
+
+#     def __post_init__(self):
+#         self.id = 100
 # 不允许用户创建对象时传入的属性
 
 # User('Jack', 20)
