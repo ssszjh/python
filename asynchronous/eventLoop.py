@@ -1,4 +1,4 @@
-Event Loop（事件循环）
+# Event Loop（事件循环）
 # await、create_task、gather
 
 # Event Loop
@@ -128,9 +128,9 @@ async def main():
 
 
 asyncio.run(main())
-1. create_task() 创建出来的 task1 是 Coroutine 还是 Task？
-Task
-2. create_task() 之后，work('A', 2) 和 work('B', 1) 会不会开始被调度执行？
+# 1. create_task() 创建出来的 task1 是 Coroutine 还是 Task？
+# Task
+# 2. create_task() 之后，work('A', 2) 和 work('B', 1) 会不会开始被调度执行？
 # 会开始被调度;
 # 那为什么不是先打印开始呢，而是main继续执行？
 # asyncio.create_task 是立即调度（把协程包装成 Task 扔进事件循环的就绪队列），不需要等到 await。
@@ -142,15 +142,17 @@ Task
 # create_task 只管“报名参赛”（立即调度），await 才是“发令枪响”（触发事件循环去跑比赛）
 
 
-3. print('main继续执行') 会不会等 A、B 执行完才打印？
-不会
-4. 最终输出顺序是什么？
-main继续执行
-A 开始
-B 开始
-B 结束
-A 结束
-A B
+3. 
+# print('main继续执行') 会不会等 A、B 执行完才打印？
+# 不会
+4. 
+# 最终输出顺序是什么？
+# main继续执行
+# A 开始
+# B 开始
+# B 结束
+# A 结束
+# A B
 
 # create_task()
 #     ↓
@@ -216,10 +218,10 @@ async def main():
 asyncio.run(main())
 
 
-① 最终大概需要几秒？ 
-2
-② 输出顺序是什么？
-main 1  B开始 A开始 B结束 main 2 A结束 main 3 A,B
+# ① 最终大概需要几秒？ 
+# 2
+# ② 输出顺序是什么？
+# main 1  B开始 A开始 B结束 main 2 A结束 main 3 A,B
 # create_task 立即调度，但不立即执行：A开始 打印在 main 1 之后，而不是之前，因为 main 函数直到 await b() 才交出控制权。
 # await 的“趁虚而入”：虽然你写的是 await b()，但在 b 睡眠期间，事件循环会自动去执行已经调度的 task_a，这展示了 asyncio 的协作式并发特性。
 # 先执行完 b 再 await task_a：main 2 打印在 A结束 之前，说明代码是顺序执行的——先等 b() 彻底完成，才去等 task_a。虽然 a 和 b 在并发运行，但代码流程严格遵循 await 的顺序。
@@ -232,20 +234,20 @@ main 1  B开始 A开始 B结束 main 2 A结束 main 3 A,B
 # 第 3 步（B 让出控制权）：接着执行到 await asyncio.sleep(1)，b() 发现要等 1 秒，于是它告诉事件循环：“我先睡会儿”。直到这一刻，main 才把 CPU 控制权交还给事件循环。
 # 第 4 步（事件循环翻牌）：事件循环拿到控制权后，发现队列里躺着之前创建的 task_a，于是才去执行 a()，此时 A开始 才被打印。
 
-③ 为什么 a() 和 b() 会同时进行？
-create_task是当前 Event Loop 中创建一个 Task
-④ 如果把：
-task_a = asyncio.create_task(a())
-改成：
-result_a = await a()
-那么总耗时会变成多少？
-3
+# ③ 为什么 a() 和 b() 会同时进行？
+# create_task是当前 Event Loop 中创建一个 Task
+# ④ 如果把：
+# task_a = asyncio.create_task(a())
+# 改成：
+# result_a = await a()
+# 那么总耗时会变成多少？
+# 3
 
-⑤ 最后一个问题：
-为什么这里使用 create_task(a()) 是有意义的，而直接：
-await a()
-就失去了它的意义？
-create_task() 的价值是：让任务提前开始执行，我可以先去做别的事情。
+# ⑤ 最后一个问题：
+# 为什么这里使用 create_task(a()) 是有意义的，而直接：
+# await a()
+# 就失去了它的意义？
+# create_task() 的价值是：让任务提前开始执行，我可以先去做别的事情。
 
 
 import asyncio
@@ -275,61 +277,57 @@ async def main():
 asyncio.run(main())
 
 1.
-A 和 B 是否会并发执行？
-并发执行，是两个不同的task
+# A 和 B 是否会并发执行？
+# 并发执行，是两个不同的task
 2.
-最终输出顺序是什么？
-A开始 B开始 B结束 A结束
+# 最终输出顺序是什么？
+# A开始 B开始 B结束 A结束
 3.
-总耗时大约是 1 秒、2 秒还是 3 秒？
+# 总耗时大约是 1 秒、2 秒还是 3 秒？
 2
 4.
-把：
-await asyncio.sleep(2)
-换成：
-time.sleep(2)
-会发生什么？
-是整个线程阻塞了2秒，其他task无法并行进行；总耗时为3
+# 把：await asyncio.sleep(2)换成：time.sleep(2)会发生什么？
+# 是整个线程阻塞了2秒，其他task无法并行进行；总耗时为3
 
-while True:
+# while True:
 
-    找到可以运行的 Task
+#     找到可以运行的 Task
 
-    让它运行一小段
+#     让它运行一小段
 
-    如果 Task 遇到 await：
-        暂停它
+#     如果 Task 遇到 await：
+#         暂停它
 
-    看看有没有其他 Task 可以运行
+#     看看有没有其他 Task 可以运行
 
-    重复
+#     重复
     
-async def
-   ↓
-Coroutine Function
+# async def
+#    ↓
+# Coroutine Function
 
-foo()
-   ↓
-Coroutine Object
+# foo()
+#    ↓
+# Coroutine Object
 
-create_task(foo())
-   ↓
-Task
-   ↓
-交给 Event Loop
+# create_task(foo())
+#    ↓
+# Task
+#    ↓
+# 交给 Event Loop
 
-Task 开始执行
-   ↓
-遇到 await
-   ↓
-当前 Task 暂停
-   ↓
-控制权回到 Event Loop
-   ↓
-Event Loop 找其他可以运行的 Task
-   ↓
-其他 Task 执行
-   ↓
-等待条件满足
-   ↓
-原 Task 恢复
+# Task 开始执行
+#    ↓
+# 遇到 await
+#    ↓
+# 当前 Task 暂停
+#    ↓
+# 控制权回到 Event Loop
+#    ↓
+# Event Loop 找其他可以运行的 Task
+#    ↓
+# 其他 Task 执行
+#    ↓
+# 等待条件满足
+#    ↓
+# 原 Task 恢复

@@ -124,49 +124,49 @@ async def main():
 asyncio.run(main())
 
 1.
-第一次：
-print(task.done())
-输出：
-True
-还是：
-False
+# 第一次：
+# print(task.done())
+# 输出：
+# True
+# 还是：
+# False
 # False
 
 2.
-为什么？
+# 为什么？
 # 此时task尚未执行，只是挂起了
 # Task 已经被创建并安排执行，但还没有真正开始执行 work()
 
 3.
-执行：
-result = await task
-之后，task 是完成状态还是未完成状态？
+# 执行：
+# result = await task
+# 之后，task 是完成状态还是未完成状态？
 # 完成
 
 4.
-第二个：
-print(task.done())
-输出什么？
+# 第二个：
+# print(task.done())
+# 输出什么？
 # True
 
 5.
-最终 result 是多少？
+# 最终 result 是多少？
 # 100
 
-Coroutine
-   │
-   │ create_task()
-   ↓
-Task
-   │
-   │ Event Loop 调度
-   ↓
-执行 coroutine
-   │
-   │ return 100
-   ↓
-Task 完成
-   │
-   │ await task
-   ↓
-得到 100
+# Coroutine
+#    │
+#    │ create_task()
+#    ↓
+# Task
+#    │
+#    │ Event Loop 调度
+#    ↓
+# 执行 coroutine
+#    │
+#    │ return 100
+#    ↓
+# Task 完成
+#    │
+#    │ await task
+#    ↓
+# 得到 100

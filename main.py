@@ -1,22 +1,21 @@
 import asyncio
 
+async def work(name, delay):
+    print(f'{name} 开始')
 
-async def work():
-    print('开始')
-    await asyncio.sleep(1)
-    print('结束')
-    return 100
+    await asyncio.sleep(delay)
 
+    if name == 'B':
+        raise ValueError('B 出错了')
 
+    print(f'{name} 结束')
+    
 async def main():
-    task = asyncio.create_task(work())
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(work('A', 3))
+        tg.create_task(work('B', 1))
+        tg.create_task(work('C', 5))
 
-    print(task.done())
-
-    result = await task
-
-    print(task.done())
-    print(result)
-
+    print('TaskGroup结束')
 
 asyncio.run(main())
