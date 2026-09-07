@@ -1,21 +1,26 @@
 import asyncio
 
-async def work(name, delay):
-    print(f'{name} 开始')
+async def work_a():
+    print('A开始')
+    await asyncio.sleep(1)
+    raise ValueError('A出错了')
 
-    await asyncio.sleep(delay)
+async def work_b():
+    print('B开始')
+    await asyncio.sleep(2)
+    print('B结束')
+    return 'B结果'
 
-    if name == 'B':
-        raise ValueError('B 出错了')
-
-    print(f'{name} 结束')
-    
 async def main():
-    async with asyncio.TaskGroup() as tg:
-        tg.create_task(work('A', 3))
-        tg.create_task(work('B', 1))
-        tg.create_task(work('C', 5))
-
-    print('TaskGroup结束')
+    try:
+        results = await asyncio.gather(
+            work_a(),
+            work_b()
+        )
+        print(results)
+    except ValueError as e:
+        print('捕获:', e)
+    await asyncio.sleep(2)
+    
 
 asyncio.run(main())
