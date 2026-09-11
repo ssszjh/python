@@ -20,6 +20,9 @@ asyncio.create_task()
 Future Coroutine
 异步异常处理
 TaskGroup
+asyncio.wait
+wait_for
+asyncio.as_completed()
    ↓
 异步 IO：网络请求 / 文件 / 数据库
    ↓
