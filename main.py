@@ -1,26 +1,36 @@
 import asyncio
 
-async def work_a():
-    print('A开始')
-    await asyncio.sleep(1)
-    raise ValueError('A出错了')
 
-async def work_b():
-    print('B开始')
-    await asyncio.sleep(2)
-    print('B结束')
-    return 'B结果'
+async def work(name, delay, error=False):
+    print(f'{name} 开始')
+
+    await asyncio.sleep(delay)
+
+    if error:
+        print(f'{name} 出错')
+        raise ValueError(f'{name} error')
+
+    print(f'{name} 完成')
+
+    return name
+
 
 async def main():
-    try:
-        results = await asyncio.gather(
-            work_a(),
-            work_b()
-        )
-        print(results)
-    except ValueError as e:
-        print('捕获:', e)
-    await asyncio.sleep(2)
-    
+    tasks = [
+        asyncio.create_task(work('A', 3)),
+        asyncio.create_task(work('B', 1, True)),
+        asyncio.create_task(work('C', 2)),
+    ]
+
+    for future in asyncio.as_completed(tasks):
+        try:
+            result = await future
+            print('结果:', result)
+
+        except Exception as e:
+            print('捕获异常:', type(e).__name__)
+
+    print('main 结束')
+
 
 asyncio.run(main())

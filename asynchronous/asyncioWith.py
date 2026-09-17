@@ -491,3 +491,288 @@ asyncio.run(main())
 # asyncio.as_completed()
 # 让你按照“完成顺序”一个一个拿结果
 # 适合并发请求多个接口，然后谁先返回就先处理谁的结果
+# as_completed() 不会因为其中一个任务异常，就自动取消其他任务。
+#                     asyncio
+#                        │
+#         ┌──────────────┴──────────────┐
+#         ↓                             ↓
+#       wait()                    as_completed()
+#         │                             │
+#         ↓                             ↓
+#   done / pending              完成一个处理一个
+#         │                             │
+#         ↓                             ↓
+# FIRST_COMPLETED              B → C → A
+# FIRST_EXCEPTION
+# ALL_COMPLETED
+# wait() 更适合“观察一组任务当前处于什么状态”；as_completed() 更适合“按完成顺序消费任务结果”。
+
+import asyncio
+
+
+async def work(name, delay, error=False):
+    print(f'{name} 开始')
+
+    await asyncio.sleep(delay)
+
+    if error:
+        print(f'{name} 出错')
+        raise ValueError(f'{name} error')
+
+    print(f'{name} 完成')
+
+    return name
+
+
+async def main():
+    tasks = [
+        asyncio.create_task(work('A', 3)),
+        asyncio.create_task(work('B', 1, True)),
+        asyncio.create_task(work('C', 2)),
+    ]
+
+    for future in asyncio.as_completed(tasks):
+        try:
+            result = await future
+            print('结果:', result)
+
+        except Exception as e:
+            print('捕获异常:', type(e).__name__)
+
+    print('main 结束')
+
+
+asyncio.run(main())
+
+# 1.
+# A、B、C 会不会全部开始？
+# 会
+
+# 2.
+# 三个任务的完成/异常顺序是什么？
+# 第一个：B 异常
+# 第二个：C 正常
+# 第三个：A 正常
+
+# 3.
+# as_completed() 返回的顺序，是：A,B
+# A. 创建顺序 A → B → C
+# B. 完成顺序 B → C → A
+# C. 随机顺序
+
+# 4.
+# B 抛出 ValueError 后：except Exception as e:会不会捕获？
+# 会捕获
+
+# 5.
+# B 出错以后，C 和 A 会不会继续运行？
+# 会继续运行
+
+# 6.
+# 最终大概输出什么？(as_completed完成一个处理一个)
+# A 开始
+# B 开始
+# C 开始
+# B 出错
+# 捕获异常: ValueError
+# C 完成
+# 结果:C
+# A 完成
+# 结果:A
+# main 结束
+
+# 7.
+# 如果把：asyncio.as_completed(tasks)换成：
+# await asyncio.wait(
+#     tasks,
+#     return_when=asyncio.FIRST_COMPLETED
+# )
+# 那么最大的区别是什么？
+# 这一次 wait 返回时，还没有得到另外两个结果
+
+# | 方法               | 核心特点            |
+# | ---------------- | --------------- |
+# | `gather()`       | **我要所有结果**      |
+# | `wait()`         | **我要知道任务现在的状态** |
+# | `as_completed()` | **谁先完成，我先处理谁**  |
+
+# as_completed() 的 timeout
+# as_completed(timeout=x) 的意思是：最多等 x秒，如果 x 秒内所有任务没有全部完成，就产生 TimeoutError。
+# 超时后，其他 Task 会不会自动取消？不会。
+# | 方法               | 核心特点                 |
+# | ---------------- | -------------------- |
+# | `gather()`       | 我要所有结果               |
+# | `wait()`         | 我要知道谁 done、谁 pending |
+# | `as_completed()` | 谁先完成，我先处理谁           |
+# | `wait_for()`     | 给一个 awaitable 设置超时   |
+# | `timeout()`      | 给一整段代码设置超时           |
+
+# gather
+#     ↓
+# 我要全部结果
+
+# wait
+#     ↓
+# 告诉我 done / pending
+
+# as_completed
+#     ↓
+# 谁先完成先给谁
+
+# wait_for
+#     ↓
+# 这个 await 最多等多久
+
+# timeout
+#     ↓
+# 这一整段代码最多执行多久
+
+# shield
+#     ↓
+# 外层取消/超时时，不要顺便取消内部 Task
+
+async def work(name, seconds):
+    print(name, '开始')
+    await asyncio.sleep(seconds)
+    print(name, '结束')
+    return name
+
+
+async def main():
+    tasks = [
+        asyncio.create_task(work('A', 3)),
+        asyncio.create_task(work('B', 1)),
+        asyncio.create_task(work('C', 5)),
+    ]
+
+    try:
+        for future in asyncio.as_completed(tasks, timeout=2):
+            result = await future
+            print('结果:', result)
+    except asyncio.TimeoutError:
+        print('超时')
+
+# 1.
+# A、B、C 会不会都开始？
+# 会
+
+# 2.
+# 1 秒时会发生什么？输出顺序是什么？
+# B结束
+# 结果:B
+
+# 3.
+# 结果: B 会不会打印？
+# 会
+
+# 4.
+# 2 秒时会发生什么？A 和 C 会不会自动取消？
+# 2秒内所有任务没有全部完成，就产生 TimeoutError。
+# 不会
+
+# 5.
+# 如果把 as_completed() 换成：
+# done, pending = await asyncio.wait(
+#     tasks,
+#     timeout=2
+# )
+# 2 秒后 done 和 pending 大概分别是什么？
+# done B
+# pending A C
+
+# 6.
+# 如果业务要求“2 秒内谁返回就用谁，剩余任务全部取消”，你会选择 as_completed() 还是 wait()？为什么？
+# as_completed;因为wait还会返回pending 业务不关心pending的；只关心2秒内的
+
+#                     并发任务
+#                        │
+#        ┌───────────────┼────────────────┐
+#        │               │                │
+#     gather          wait          as_completed
+#        │               │                │
+#     全部结果        done/pending       完成顺序
+#        │               │                │
+#     输入顺序        可以 timeout       谁先完成先处理
+
+# wait_for
+#    ↓
+# 限制一个 awaitable 的时间
+
+# timeout
+#    ↓
+# 限制一整段代码的时间
+
+# shield
+#    ↓
+# 保护内部 Task 不被外层取消
+
+import asyncio
+
+
+async def tool(name, seconds):
+    print(name, '开始')
+    await asyncio.sleep(seconds)
+    print(name, '完成')
+    return name
+
+
+async def main():
+    tasks = [
+        asyncio.create_task(tool('RAG', 3)),
+        asyncio.create_task(tool('Search', 1)),
+        asyncio.create_task(tool('DB', 2)),
+    ]
+
+    done, pending = await asyncio.wait(
+        tasks,
+        timeout=1.5
+    )
+
+    print('done:', len(done))
+    print('pending:', len(pending))
+
+# 1. 
+# RAG、Search、DB 会不会都开始？
+# 会
+
+# 2. 
+# 1.5 秒时，哪个任务在 done？
+# Search
+
+# 3. 
+# 哪两个任务在 pending？
+# RAG DB
+# 4. 
+# wait(timeout=1.5) 超时后，会不会自动取消 RAG 和 DB？
+# 不会
+
+# 5. 
+# 如果业务改成：
+# “三个工具全部完成后，我才能继续生成最终答案。”
+# 你选择 gather、wait 还是 as_completed？为什么？
+# gather 全部完成
+
+# 6. 
+# 如果业务改成：
+# “三个工具同时执行，谁最先返回就直接使用谁，其他工具全部取消。”
+# 你选择哪个？为什么？
+# as_completed  最先返回就直接使用谁
+
+# 7. 
+# 如果业务改成：
+# “最多等待 1.5 秒，1.5 秒时已经完成的全部拿来用，没完成的全部取消。”
+# 你会怎么组合 wait() + cancel() + gather()？
+# 先用wait拿到done和pending
+# pendin的取消
+# gather 收尾
+# wait
+#  ↓
+# 得到 done / pending
+#  ↓
+# 处理 done
+#  ↓
+# cancel pending
+#  ↓
+# gather pending
+#  ↓
+# 完成清理
