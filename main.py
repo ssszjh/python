@@ -1,36 +1,25 @@
 import asyncio
 
-
-async def work(name, delay, error=False):
-    print(f'{name} 开始')
-
-    await asyncio.sleep(delay)
-
-    if error:
-        print(f'{name} 出错')
-        raise ValueError(f'{name} error')
-
-    print(f'{name} 完成')
-
-    return name
-
+async def work():
+    try:
+        print('A')
+        await asyncio.sleep(5)
+        print('B')
+    except asyncio.CancelledError:
+        print('C')
+        raise
+    finally:
+        print('D')
 
 async def main():
-    tasks = [
-        asyncio.create_task(work('A', 3)),
-        asyncio.create_task(work('B', 1, True)),
-        asyncio.create_task(work('C', 2)),
-    ]
+    task = asyncio.create_task(work())
 
-    for future in asyncio.as_completed(tasks):
-        try:
-            result = await future
-            print('结果:', result)
+    try:
+        await asyncio.wait_for(task, timeout=1)
+    except asyncio.TimeoutError:
+        print('E')
 
-        except Exception as e:
-            print('捕获异常:', type(e).__name__)
-
-    print('main 结束')
-
+    print('done:', task.done())
+    print('cancelled:', task.cancelled())
 
 asyncio.run(main())
